@@ -1,0 +1,12 @@
+[Unit]
+Description=Daemon for automatically deploying code and monitoring file landings to re-deploy code.
+
+[Service]
+User=root
+ExecStart=/opt/deploy-daemon/spring-deploy-daemon.sh
+Restart=always
+RestartSec=15
+WorkingDirectory=/opt/deploy-daemon/
+
+[Install]
+WantedBy=multi-user.target
