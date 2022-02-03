@@ -47,7 +47,7 @@ touch $comparison_file
 # start the server since this is the script start up
 printf "\n$(date) -------> Fresh script start - starting Spring Tomcat server for the first time.\n"
 printf "\n$(date) -------> Starting new Spring JAR: ${UNDERLINE}$(ls $jar_path/*.jar)${NORMAL}\n"
-nohup java -jar $jar_path/*.jar &> tomcat-log.txt &
+java -jar $jar_path/*.jar &> tomcat-log.txt &
 PID=$!
 printf "\n$(date) -------> PID of Spring process: ${UNDERLINE}$PID${NORMAL}\n"
 printf "\n$(date) -------> Tomcat server running.\n"
@@ -79,7 +79,7 @@ while sleep 20; do
 			printf "$(date) -------> ${RED}ERROR:${NORMAL} process: ${UNDERLINE}$PID${NORMAL} was NOT killed successfully.\n"
 		fi
 		printf "\n$(date) -------> Starting new Spring JAR: ${UNDERLINE}$(ls $jar_path/*.jar)${NORMAL}\n"
-		nohup java -jar $jar_path/*.jar &> tomcat-log.txt &
+		java -jar $jar_path/*.jar &> tomcat-log.txt &
 		PID=$!
 		printf "\n$(date) -------> PID of Spring process: ${UNDERLINE}$PID${NORMAL}\n"
 		printf "\n$(date) -------> Tomcat server running.\n"
