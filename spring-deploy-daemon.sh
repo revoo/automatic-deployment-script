@@ -7,9 +7,6 @@
 # this script has been set up as a service with systemd 
 # start with systemctl start deploy-daemon.service
 # this file is located in /etc/systemd/system
-# so this is a real daemon process now. It doesn't daemonize itself but by systemd on boot.
-# this script will run on startup everytime and restart itself if it goes offline by systemd
-# the service configuration is located in deploy-daemon.service
 
 # configure terminal colors
 CYAN=$(tput setaf 6)
@@ -26,13 +23,14 @@ kill -9 $(pgrep -f jar)
 sleep 4
 
 printf "\n$(date) -------> Checking that the JAR directory has the latest JAR prepared.\n"
-if [ $(ls -l $jar_path | wc -l) -gt 3 ]; then
+if [ $(ls -l $jar_path | wc -l) -gt 4 ]; then
 	printf "\n$(date) -------> JAR directory has old files - archiving them and keeping the newest JAR.\n"
 	cd $jar_path
 	# move older files to archive and keep the newest jar
-	ls -t -Iarchive  | xargs -n1 | tail -n +2 | xargs mv -t archive
+	ls -t --ignore=archive --ignore=config  | xargs -n1 | tail -n +2 | xargs mv -t archive
 	cd ..
 	# -I option will ignore any patterns that start with archive which is our directory
+	# Alternatively, you can use the --ignore=PATTERN flag which is what I decided to use
 	# args will split input into lines
 	# tail -n +2 will skip the first line since that is the newest one chronologically and the one we want to keep
 	# finally xargs will take the input and move the files into our archive directory
@@ -47,7 +45,7 @@ touch $comparison_file
 # start the server since this is the script start up
 printf "\n$(date) -------> Fresh script start - starting Spring Tomcat server for the first time.\n"
 printf "\n$(date) -------> Starting new Spring JAR: ${UNDERLINE}$(ls $jar_path/*.jar)${NORMAL}\n"
-java -jar $jar_path/*.jar &> tomcat-log.txt &
+java -Dspring.config.location=/opt/deploy-daemon/webapp/config/application.properties -jar $jar_path/*.jar &> tomcat-log.txt &
 PID=$!
 printf "\n$(date) -------> PID of Spring process: ${UNDERLINE}$PID${NORMAL}\n"
 printf "\n$(date) -------> Tomcat server running.\n"
@@ -55,10 +53,10 @@ printf "\n$(date) -------> Monitoring for JAR file changes...\n"
 echo $PID > server.pid
 
 while sleep 20; do
-	if [ $(ls -l $jar_path | wc -l) -gt 3 ]; then
+	if [ $(ls -l $jar_path | wc -l) -gt 4 ]; then
 		printf "\n$(date) -------> New JAR Landed -> Archiving older JAR file and restart server with new JAR file.\n"
 		cd $jar_path
-		ls -t -Iarchive | xargs -n1 | tail -n +2 | xargs mv -t archive
+		ls -t --ignore=archive --ignore=config | xargs -n1 | tail -n +2 | xargs mv -t archive
 		cd ..
 		printf "\n$(date) -------> Older JAR files archived.\n"
 	fi
@@ -79,7 +77,7 @@ while sleep 20; do
 			printf "$(date) -------> ${RED}ERROR:${NORMAL} process: ${UNDERLINE}$PID${NORMAL} was NOT killed successfully.\n"
 		fi
 		printf "\n$(date) -------> Starting new Spring JAR: ${UNDERLINE}$(ls $jar_path/*.jar)${NORMAL}\n"
-		java -jar $jar_path/*.jar &> tomcat-log.txt &
+		java -Dspring.config.location=/opt/deploy-daemon/webapp/config/application.properties -jar $jar_path/*.jar &> tomcat-log.txt &
 		PID=$!
 		printf "\n$(date) -------> PID of Spring process: ${UNDERLINE}$PID${NORMAL}\n"
 		printf "\n$(date) -------> Tomcat server running.\n"
