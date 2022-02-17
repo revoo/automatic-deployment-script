@@ -1,0 +1,30 @@
+2/17/2022 -
+This directory has been "daemonized" using systemd.
+the service name is "deploy-daemon.service"
+
+You can start/stop/restart it using it like this:
+systemctl start/stop/restart deploy-daemon.service
+
+You can check the status of the service like this:
+systemctl status deploy-daemon.service
+
+you can view its logs at:
+journalctl -u deploy-daemon.service
+
+you can view how much space these logs are taking at:
+journalctl --disk-usage
+
+you can view the service definition for deploy-daemon.service at:
+/etc/systemd/system
+
+I have additionally added the service definition to a directory that will start this service at runtime which will run this service on boot.
+This means that the service will always be running regardless if there are restarts or downtime to the host server (EC2 instance in this case)..
+If the service fails for any reason, systemd will attempt to restart it.
+Pretty neat.
+
+So all I gotta do is just to start up the instance and it will start deploying any JARs I push to github automatically while archiving the old JARs.
+The webapp directory is where the script will launch (deploy) the JAR. If there are multiple JARs present from multiple pushes via Github Actions then it will archive the oldest JAR
+And launch the newest JAR.
+
+The script monitors when new JARs land by comparing them with a trigger file/comparison file. The comparison file is created during deployment and "timestamps" when the last deployment happened.
+If any JARs land that are newer than the comparison file, then the script will stop the current Tomcat instance and re-deploy the newest JAR and archive the old JAR.
